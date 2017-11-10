@@ -6,7 +6,7 @@ setup(
   'simple_rl.tasks.chain', 'simple_rl.tasks.random', 'simple_rl.tasks.grid_world', 'simple_rl.tasks.four_room',\
   'simple_rl.tasks.taxi', 'simple_rl.mdp.markov_game', 'simple_rl.tasks.gym',\
   'simple_rl.tasks.grid_game', 'simple_rl.tasks.rock_paper_scissors', 'simple_rl.tasks.prisoners', \
-  'simple_rl.abstraction', 'simple_rl.abstraction.action_abs', 'simple_rl.abstraction.state_abs'],
+  'simple_rl.abstraction', 'simple_rl.abstraction.action_abs', 'simple_rl.abstraction.state_abs', 'simple_rl.tasks.gathering'],
   scripts=['simple_rl/run_experiments.py'],
   install_requires=[
       'numpy',

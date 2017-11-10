@@ -11,6 +11,7 @@ from taxi.TaxiStateClass import TaxiState
 from prisoners.PrisonersDilemmaMDPClass import PrisonersDilemmaMDP
 from rock_paper_scissors.RockPaperScissorsMDPClass import RockPaperScissorsMDP
 from grid_game.GridGameMDPClass import GridGameMDP
+from gathering.GatheringMDPClass import GatheringMDP
 try:
 	from gym.GymMDPClass import GymMDP
 except ImportError:
