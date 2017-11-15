@@ -17,11 +17,21 @@ class GatheringMDP(MarkovGameMDP):
     # Static constants.
     ACTIONS = ["step_forward", "step_backward", "step_left", "step_right", "rotate_left", "rotate_right", "use_beam", "stand_still"]
 
-    #ACTIONS = ["rock", "paper", "scissors"]
+    def __init__(self, gamma, N_apples, N_tagged, dim):
+        self.gamma, self.N_apples, self.N_tagged = gamma, N_apples, N_tagged
+        self.x_dim, self.y_dim = dim[0], dim[1]
 
-    def __init__(self, gamma, N_apples, N_freeze):
-        # TODO: change State to GatheringState()
-        MarkovGameMDP.__init__(self, GatheringMDP.ACTIONS, self._transition_func, self._reward_func, init_state=State())
+        agent1 = Agent()
+        agent2 = Agent()
+        apple_locations = np.zeros(shape=[10, 10], dtype=np.int32)
+
+        MarkovGameMDP.__init__(
+            self,
+            GatheringMDP.ACTIONS,
+            self._transition_func,
+            self._reward_func,
+            init_state=GatheringState(agent1, agent2, apple_locations),
+        )
 
         # TODO: 1. Take in game parameters: grid game size (16 by 21 in the paper),
         # game length, player 1 & player 2 locations, gamma, n_{apples}, n_{freeze}

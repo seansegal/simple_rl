@@ -27,16 +27,16 @@ class GatheringState(State):
         self.y_dim = apple_locations.shape[1]
 
     def __hash__(self):
-        # TODO: include apple_locations
-        return hash(tuple(agent1, agent2))
+        return hash(tuple(str(agent1), str(agent2), str(apple_locations)))
 
     def __str__(self):
-        # TODO: Print string reprensentation of the State.
-        pass
+        stateString = [str(agent1), str(agent2), apple_locations.tostring()]
+        return ''.join(stateString)
 
     def __eq__(self, other):
-        # TODO
-        pass
+        if not isinstance(other, GatheringState):
+            return False
+        return self.agent1 == other.agent1 and self.agent2 == other.agent2 and np.array_equal(self.apple_locations, other.apple_locations)
 
     def to_rgb(self):
         # 3 by x_length by y_length array with values 0 (0) --> 1 (255)
@@ -108,21 +108,25 @@ class Agent():
         assert False, 'Invalid direction.'
 
     def __hash__(self):
-        # TODO: make this better (use all components)
-        return hash(self.x)
+        return hash(str(self))
 
     def __str__(self):
-        # TODO: Print string reprensentation of the State.
-        pass
+        agentString = ['{:02d}'.format(self.x), '{:02d}'.format(self.y), '1' if self.is_shining else '0', self.orientation, str(self.hits), str(self.frozen_time_remaining)]
+        return ''.join(agentString)
 
     def __eq__(self, other):
-        # TODO
-        pass
+        if not isinstance(other, Agent):
+            return False
+        return str(self) == str(other)
 
 
 if __name__ == '__main__':
     agent1 = Agent(5, 6, True, 'NORTH', None, None)
     agent2 = Agent(6, 7, False, 'WEST', None, None)
-    state = GatheringState(agent1, agent2, np.zeros(shape=[10, 10], dtype=np.int32))
-    plt.imshow(state.to_rgb())
+    agent3 = Agent(5, 6, True, 'NORTH', None, None)
+    agent4 = Agent(1, 2, True, 'EAST', None, None)
+    state1 = GatheringState(agent1, agent2, np.zeros(shape=[21, 11], dtype=np.int32))
+    state2 = GatheringState(agent3, agent4, np.zeros(shape=[21, 11], dtype=np.int32))
+    state3 = GatheringState(agent3, agent4, np.zeros(shape=[21, 11], dtype=np.int32))
+    plt.imshow(state1.to_rgb())
     plt.show()
