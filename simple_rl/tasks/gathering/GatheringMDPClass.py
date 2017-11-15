@@ -19,7 +19,7 @@ class GatheringMDP(MarkovGameMDP):
 
     #ACTIONS = ["rock", "paper", "scissors"]
 
-    def __init__(self):
+    def __init__(self, gamma, N_apples, N_freeze):
         # TODO: change State to GatheringState()
         MarkovGameMDP.__init__(self, GatheringMDP.ACTIONS, self._transition_func, self._reward_func, init_state=State())
 
@@ -37,8 +37,6 @@ class GatheringMDP(MarkovGameMDP):
         # TODO: remove. Rock paper scissors below.
         agent_a, agent_b = action_dict.keys()[0], action_dict.keys()[1]
         action_a, action_b = action_dict[agent_a], action_dict[agent_b]
-s
-        reward_dict = {}
 
         # Win conditions.
         a_win = (action_a == "rock" and action_b == "scissors") or \
