@@ -4,38 +4,47 @@ Dilemmas. '''
 
 # Python imports.
 import random
+import numpy as np
 
 # Other imports.
 from simple_rl.mdp.markov_game.MarkovGameMDPClass import MarkovGameMDP
 from simple_rl.tasks.gathering.GatheringStateClass import GatheringState
+from simple_rl.tasks.gathering.GatheringStateClass import GatheringAgent
 
 # TODO: remove when State is changed to GatheringState
 from simple_rl.mdp.StateClass import State
+
+
+
+INITIAL_ORIENTATION = 'NORTH'
 
 class GatheringMDP(MarkovGameMDP):
 
     # Static constants.
     ACTIONS = ["step_forward", "step_backward", "step_left", "step_right", "rotate_left", "rotate_right", "use_beam", "stand_still"]
 
-    def __init__(self, gamma, N_apples, N_tagged, dim):
+    def __init__(self, gamma, possible_apple_locations, N_apples, N_tagged, dim=(35, 13)):
         self.gamma, self.N_apples, self.N_tagged = gamma, N_apples, N_tagged
         self.x_dim, self.y_dim = dim[0], dim[1]
 
-        agent1 = Agent()
-        agent2 = Agent()
-        apple_locations = np.zeros(shape=[10, 10], dtype=np.int32)
+        agent1 = GatheringAgent(31, 6, False, INITIAL_ORIENTATION, 0, 0)
+        agent2 = GatheringAgent(32, 5, False, INITIAL_ORIENTATION, 0, 0)
+
+        idx = np.array(possible_apple_locations)
+        print(idx)
+
+        initial_apple_locations = np.zeros(shape=[self.x_dim, self.y_dim], dtype=np.int32)
+        initial_apple_locations[idx[:, 0], idx[:, 1]] = 1
+        print(initial_apple_locations)
 
         MarkovGameMDP.__init__(
             self,
             GatheringMDP.ACTIONS,
             self._transition_func,
             self._reward_func,
-            init_state=GatheringState(agent1, agent2, apple_locations),
+            init_state=GatheringState(agent1, agent2, initial_apple_locations),
         )
 
-        # TODO: 1. Take in game parameters: grid game size (16 by 21 in the paper),
-        # game length, player 1 & player 2 locations, gamma, n_{apples}, n_{freeze}
-        # TODO: 2. Initialize game state based on parameters
 
     def _reward_func(self, state, action_dict):
         # TODO: 1. Check to see if a player if frozen, if they are, ignore the action.

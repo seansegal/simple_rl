@@ -27,10 +27,10 @@ class GatheringState(State):
         self.y_dim = apple_locations.shape[1]
 
     def __hash__(self):
-        return hash(tuple(str(agent1), str(agent2), str(apple_locations)))
+        return hash(tuple(str(self.agent1), str(self.agent2), str(self.apple_locations)))
 
     def __str__(self):
-        stateString = [str(agent1), str(agent2), apple_locations.tostring()]
+        stateString = [str(self.agent1), str(self.agent2), self.apple_locations.tostring()]
         return ''.join(stateString)
 
     def __eq__(self, other):
@@ -61,9 +61,10 @@ class GatheringState(State):
             board[:, beam[0], beam[1]] = np.transpose(np.ones(shape=[beam[2], 1])*COLORS['light'])
 
         # Apples
-        board[0, self.apple_locations] = COLORS['apple'][0]
-        board[1, self.apple_locations] = COLORS['apple'][1]
-        board[2, self.apple_locations] = COLORS['apple'][2]
+
+        board[0, (self.apple_locations == 1)] = COLORS['apple'][0]
+        board[1, (self.apple_locations == 1)] = COLORS['apple'][1]
+        board[2, (self.apple_locations == 1)] = COLORS['apple'][2]
 
         # Walls
         board[:, np.arange(0, self.x_dim), 0] = np.transpose(np.ones(shape=[self.x_dim, 1])*COLORS['walls'])
@@ -74,7 +75,13 @@ class GatheringState(State):
         board = board/(255.0)
         return np.transpose(board, axes=[2, 1, 0])
 
-class Agent():
+
+    def show(self):
+        rgb = self.to_rgb()
+        plt.imshow(rgb)
+        plt.show()
+
+class GatheringAgent():
 
     def __init__(self, x, y, is_shining, orientation, hits, frozen_time_remaining):
         self.x, self.y, self.is_shining, = x, y, is_shining
@@ -121,11 +128,11 @@ class Agent():
 
 
 if __name__ == '__main__':
-    agent1 = Agent(5, 6, True, 'NORTH', None, None)
-    agent2 = Agent(6, 7, False, 'WEST', None, None)
-    agent3 = Agent(5, 6, True, 'NORTH', None, None)
-    agent4 = Agent(1, 2, True, 'EAST', None, None)
-    state1 = GatheringState(agent1, agent2, np.zeros(shape=[21, 11], dtype=np.int32))
+    agent1 = GatheringAgent(32, 6, False, 'NORTH', 0, 0)
+    agent2 = GatheringAgent(31, 5, False, 'NORTH', 0, 0)
+    agent3 = GatheringAgent(5, 6, True, 'NORTH', None, None)
+    agent4 = GatheringAgent(1, 2, True, 'EAST', None, None)
+    state1 = GatheringState(agent1, agent2, np.zeros(shape=[35, 11], dtype=np.int32))
     state2 = GatheringState(agent3, agent4, np.zeros(shape=[21, 11], dtype=np.int32))
     state3 = GatheringState(agent3, agent4, np.zeros(shape=[21, 11], dtype=np.int32))
     plt.imshow(state1.to_rgb())
