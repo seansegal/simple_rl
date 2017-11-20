@@ -15,6 +15,8 @@ def main(open_plot=True):
     gathering = GatheringMDP(gamma, possible_apple_locations, N_apples, N_tagged)
     gathering.get_init_state().show()
 
+    # play_markov_game([AGENTS_HERE], gathering, instances=1, episodes=100000, steps=1000, verbose=False, open_plot=True)
+
 
 if __name__ == "__main__":
     main(open_plot=not(sys.argv[-1] == "no_plot"))
