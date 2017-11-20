@@ -17,6 +17,30 @@ from simple_rl.mdp.StateClass import State
 
 
 INITIAL_ORIENTATION = 'NORTH'
+ROTATION_MATRICES = {
+    'NORTH' : np.matrix([[1, 0],[0, 1]]),
+    'SOUTH' : np.matrix([[-1, 0],[0, -1]]),
+    'EAST' : np.matrix([[0, -1],[1, 0]]),
+    'WEST' : np.matrix([[0, 1],[-1, 0]]),
+}
+MOVEMENT_VECTOR = {
+    'step_forward' : np.matrix([[0], [-1]]),
+    'step_backward' : np.matrix([[0], [1]]),
+    'step_left' : np.matrix([[-1], [0]]),
+    'step_right' : np.matrix([[1], [0]]),
+}
+ROTATE_LEFT = {
+    'NORTH' : 'WEST',
+    'SOUTH' : 'EAST',
+    'EAST' : 'NORTH',
+    'WEST' : 'SOUTH',
+}
+ROTATE_LEFT = {
+    'NORTH' : 'EAST',
+    'SOUTH' : 'WEST',
+    'EAST' : 'SOUTH',
+    'WEST' : 'NORTH',
+}
 
 class GatheringMDP(MarkovGameMDP):
 
@@ -75,14 +99,72 @@ class GatheringMDP(MarkovGameMDP):
 
     def _transition_func(self, state, action):
         # TODO: 1. Repeat computations above & update player location if they moved.
-        # TODO 2. If player rotates, update their direction in the state.
+        agent_a, agent_b = action_dict.keys()[0], action_dict.keys()[1]
+        action_a, action_b = action_dict[agent_a], action_dict[agent_b]
+
+        # This function iterates the time step for everything
+        # Iterates frozen_time_remaining, updates when apples will regenerate
+        # also gives pointers to the new agent objects
+        nextState, agent_a, agent_b = self.next_time_step(state, agent_a, agent_b)
+
+        # TODO: Set action to None if an agent cannot move
+        if agent_a.frozen_time_remaining > 0:
+            action_a = None
+        if agent_b.frozen_time_remaining > 0:
+            action_b = None
+
+        if action_a.startswith('step') and action_b.startswith('step'):
+            if self._can_perform_move(agent_a, action_a) and self._can_perform_move(agent_b, action_b):
+                a_x, a_y = self._get_next_location(agent_a, action_a)
+                b_x, b_y = self._get_next_location(agent_b, action_b)
+                if a_x == b_x and a_y == b_y:
+                    if random.random() > 0.5:
+                        agent_a.x, agent_a.y = a_x, a_y
+                    else:
+                        agent_b.x, agent_b.y = b_x, b_y
+                    return newState
+
+        for agent, act in [(agent_a, action_a), (agent_b, action_b)]:
+            if act.startswith('step') and self._can_perform_move(agent, act):
+                pos_x, pos_y = self._get_next_location(agent, act)
+                agent.x, agent.y = pos_x, pos_y
+            elif act == 'rotate_left':
+                agent.orientation = ROTATE_LEFT[agent.orientation]
+            elif act == 'rotate_right':
+                agent.orientation = ROTATE_RIGHT[agent.orientation]
+            elif act =='use_beam':
+                agent.is_shining = ! agent.is_shining
+
         # TODO 3. If a player shines a beam, see if it hits their opponent and
         # store the hit in the state.
+        if action_a == 'use_beam':
+            pass
+        if action_b == 'use_beam'
+            pass
+
         # TODO: 4. Generate apples based on parameters.
+        ## ^^ should this happen before people move? What if I move into a square
+        ## where an apple was going to be regenerated? Does it not appear until I move?
+        ## or do I go ahead and get the points?
+
         # TODO: 5. Return the current state.
 
         # TODO: remove. Rock paper scissors below
         return state
+
+    def _can_perform_move(self, agent, action):
+        final_pos_x, final_pos_y = self._get_next_location(agent, action)
+        return final_pos_x > 0 and final_pos_x < x_dim - 1 and final_pos_y > 0 and final_pos_y < y_dim - 1
+
+    def _get_next_location(self, agent, action):
+        movement = np.multiply(ROTATION_MATRICES[agent.orientation], MOVEMENT_VECTOR[action])
+        return agent.x + movement[0], agent.y + movement[1]
+
+    def _update_apples(self, state):
+        pass
+
+    def _update_state(self, agent, is_shining=None, orientation=None, hits=None):
+
 
     def __str__(self):
         return "gathering_game"
