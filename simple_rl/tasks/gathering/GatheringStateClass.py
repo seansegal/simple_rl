@@ -17,12 +17,12 @@ COLORS = {
 
 class GatheringState(State):
 
-    def __init__(self, agent1, agent2, apple_locations):
-
+    def __init__(self, agent1, agent2, apple_locations, apple_times):
         # Locations of player 1 and player 2
         self.agent1, self.agent2 = agent1, agent2
-
         self.apple_locations = apple_locations
+        # TODO: 1. Incorporate apple_times into hash, str, and eq
+        self.apple_times = apple_times
         self.x_dim = apple_locations.shape[0]
         self.y_dim = apple_locations.shape[1]
 
@@ -61,7 +61,6 @@ class GatheringState(State):
             board[:, beam[0], beam[1]] = np.transpose(np.ones(shape=[beam[2], 1])*COLORS['light'])
 
         # Apples
-
         board[0, (self.apple_locations == 1)] = COLORS['apple'][0]
         board[1, (self.apple_locations == 1)] = COLORS['apple'][1]
         board[2, (self.apple_locations == 1)] = COLORS['apple'][2]
@@ -71,10 +70,9 @@ class GatheringState(State):
         board[:, np.arange(0, self.x_dim), self.y_dim - 1] = np.transpose(np.ones(shape=[self.x_dim, 1])*COLORS['walls'])
         board[:, 0, np.arange(0, self.y_dim)] = np.transpose(np.ones(shape=[self.y_dim, 1])*COLORS['walls'])
         board[:, self.x_dim - 1, np.arange(0, self.y_dim)] = np.transpose(np.ones(shape=[self.y_dim, 1])*COLORS['walls'])
-
         board = board/(255.0)
-        return np.transpose(board, axes=[2, 1, 0])
 
+        return np.transpose(board, axes=[2, 1, 0])
 
     def show(self):
         rgb = self.to_rgb()
@@ -97,7 +95,6 @@ class GatheringAgent():
             return self.x - 1, self.y
         if self.orientation == 'EAST':
             return self.x + 1, self.y
-
         assert False, 'Invalid direction.'
 
     def get_beam(self, x_dim, y_dim):
@@ -111,7 +108,6 @@ class GatheringAgent():
             return np.arange(0, orientation[0] + 1), orientation[1], orientation[0] + 1
         if self.orientation == 'EAST':
             return np.arange(orientation[0], x_dim), orientation[1], x_dim - orientation[0]
-
         assert False, 'Invalid direction.'
 
     def __hash__(self):
@@ -126,6 +122,12 @@ class GatheringAgent():
             return False
         return str(self) == str(other)
 
+    def generate_next_state(self):
+        new_apple_locations = np.copyto(np.empty_like(self.apple_locations), self.apple_locations)
+        new_apple_times = {}
+        for apple in apple_times.keys():
+            new_apple_times[apple] = apple_times[apple]
+        return GatheringState(self.agent1, self.agent2, new_apple_locations, new_apple_times)
 
 if __name__ == '__main__':
     agent1 = GatheringAgent(32, 6, False, 'NORTH', 0, 0)
