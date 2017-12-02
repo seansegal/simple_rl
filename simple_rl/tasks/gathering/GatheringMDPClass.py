@@ -83,33 +83,21 @@ class GatheringMDP(MarkovGameMDP):
             init_state=GatheringState(agent1, agent2, initial_apple_locations),
         )
 
-
     def _reward_func(self, state, action_dict):
-        # TODO: 1. Check to see if a player if frozen, if they are, ignore the action.
-        # TODO: 2. If players are not frozen, if they use any of the four move actions,
-        # move player to appropriate place, keeping track of walls + other player.
-        # TODO 3. If a player moved, check if they collected an apple and return
-        # the appropriate reward.
-
-        # TODO: remove. Rock paper scissors below.
+        # Repeat computations above & update player location if they moved.
         agent_a, agent_b = action_dict.keys()[0], action_dict.keys()[1]
-        action_a, action_b = action_dict[agent_a], action_dict[agent_b]
-
-        # Win conditions.
-        a_win = (action_a == "rock" and action_b == "scissors") or \
-                (action_a == "paper" and action_b == "rock") or \
-                (action_a == "scissors" and action_b == "paper")
-
-        if action_a == action_b:
-            reward_dict[agent_a], reward_dict[agent_b] = 0, 0
-        elif a_win:
-            reward_dict[agent_a], reward_dict[agent_b] = 1, -1
+        reward_dict = {}
+        if state.apple_locations[agent_a.x, agent_a.y] == 1:
+            reward_dict[agent_a] = 1
         else:
-            reward_dict[agent_a], reward_dict[agent_b] = -1, 1
-
+            reward_dict[agent_a] = 0
+        if state.apple_locations[agent_b.x, agent_b.y] == 1:
+            reward_dict[agent_b] = 1
+        else:
+            reward_dict[agent_b] = 0
         return reward_dict
 
-    def _transition_func(self, state, action):
+    def _transition_func(self, state, action_dict):
         # Repeat computations above & update player location if they moved.
         agent_a, agent_b = action_dict.keys()[0], action_dict.keys()[1]
         action_a, action_b = action_dict[agent_a], action_dict[agent_b]
@@ -117,6 +105,7 @@ class GatheringMDP(MarkovGameMDP):
         ## we should be creating a new object based on the old one and returning that
         ## but maintain old agents
         newState = state.generate_next_state()
+        self._update_apples(nextState)
 
         # Two hits leads to being frozen, hits reset after -- not consecutive
         if agent_a.frozen_time_remaining > 0:
@@ -139,33 +128,42 @@ class GatheringMDP(MarkovGameMDP):
         if agent_b.frozen_time_remaining > 0:
             action_b = None
 
-        # 50 / 50 chance when both moving into same space
-        if action_a.startswith('step') and action_b.startswith('step'):
-            if self._can_perform_move(agent_a, action_a) and \
-                self._can_perform_move(agent_b, action_b):
-                a_x, a_y = self._get_next_location(agent_a, action_a)
-                b_x, b_y = self._get_next_location(agent_b, action_b)
-                if a_x == b_x and a_y == b_y:
+        a_x, a_y = agent_a.x, agent_a.y
+        if self._can_perform_move(agent_a, action_a):
+            a_x, a_y = self._get_next_location(agent_a, action_a)
+        b_x, b_y = agent_b.x, agent_b.y
+        if self._can_perform_move(agent_b, action_b):
+            b_x, b_y = self._get_next_location(agent_b, action_b)
+
+        if a_x == b_x and a_y == b_y:
+            if (agent_a.x != a_x or agent_y != a_y) and (agent_b.x != b_x or agent_b.y != b_y):
+                # 50 / 50 chance when both moving into same space
                     if random.random() > 0.5:
                         agent_a.x, agent_a.y = a_x, a_y
                     else:
                         agent_b.x, agent_b.y = b_x, b_y
-                    return newState
-        else:
-            for agent, act in [(agent_a, action_a), (agent_b, action_b)]:
-                if act.startswith('step') and self._can_perform_move(agent, act):
-                    pos_x, pos_y = self._get_next_location(agent, act)
-                    agent.x, agent.y = pos_x, pos_y
-                elif act == 'rotate_left':
-                    agent.orientation = ROTATE_LEFT[agent.orientation]
-                elif act == 'rotate_right':
-                    agent.orientation = ROTATE_RIGHT[agent.orientation]
-                elif act =='stand_still':
-                    continue
-        self._update_apples(nextState)
+            else:
+                a_x, a_y = agent_a.x, agent_a.y
+                b_x, b_y = agent_b.x, agent_b.y
+        # handle swapping locations
+        elif a_x == agent_b.x and a_y == agent_b.y and b_x == agent_a.x and b_y == agent_a.y:
+            a_x, a_y = agent_a.x, agent_a.y
+            b_x, b_y = agent_b.x, agent_b.y
+
+        agent_a.x, agent_a.y = a_x, a_y
+        agent_b.x, agent_b.y = b_x, b_y
+
+        for agent, act in [(agent_a, action_a), (agent_b, action_b)]:
+            if act == 'rotate_left':
+                agent.orientation = ROTATE_LEFT[agent.orientation]
+            elif act == 'rotate_right':
+                agent.orientation = ROTATE_RIGHT[agent.orientation]
+
         return nextState
 
     def _can_perform_move(self, agent, action):
+        if not action.startswith('step'):
+            return True
         final_pos_x, final_pos_y = self._get_next_location(agent, action)
         return final_pos_x > 0 and \
                 final_pos_x < x_dim - 1 and \
@@ -173,49 +171,69 @@ class GatheringMDP(MarkovGameMDP):
                 final_pos_y < y_dim - 1
 
     def _get_next_location(self, agent, action):
+        if not action.startswith('step'):
+            return agent.x, agent.y
         movement = np.multiply(
             ROTATION_MATRICES[agent.orientation],
             MOVEMENT_VECTOR[action],
         )
         return agent.x + movement[0], agent.y + movement[1]
 
-    # TODO: 4. Generate apples based on parameters and pick them up
+    # Generate apples based on parameters and pick them up
     ## apples appear after people have moved and not where people are located
     def _update_apples(self, state):
         # iterate through apple Locations
         for apple in state.apple_times.keys():
-            apple_x, apple_y = int(apple[0:2]), int(apple[2:])
+            apple_x, apple_y = apple[0], apple[1]
 
             # if it is greater than 1, lower it
             if state.apple_times[apple] > 1:
                 state.apple_times[apple] -= 1
-
             # if it is 1, check to see if a player is there
             elif state.apple_times[apple] == 1:
-                # if a player is there, do nothing
-                # if a player is not there, generate an apple
-                if state.agent1.x != apple_x and state.agent1.y != apple_y \
-                    and state.agent2.x != apple_x and state.agent2.y != apple_y:
-                    state.apple_times[apple] = 0
-                    state.apple_locations[apple_x, apple_y] = 1
-            elif apple_locations == 0:
+                # generate an apple
+                state.apple_times[apple] = 0
+                state.apple_locations[apple_x, apple_y] = 1
+            elif state.apple_times[apple] == 0:
+                assert apple_locations[apple_x, apple_y] == 1, 'Apples not generated properly'
                 # if a player is there, remove the apple from the location
                 #     and increase the apple time by N_apples
-                if state.agent1.x == apple_x and state.agent1.y == apple_y \
-                    and state.agent2.x == apple_x and state.agent2.y == apple_y:
+                if (state.agent1.x == apple_x and state.agent1.y == apple_y) \
+                    or (state.agent2.x == apple_x and state.agent2.y == apple_y):
                     apple_locations[apple_x, apple_y] = 0
-                    apple_times[apple] += self.N_apples
-                else:
-                    # if it is 0 and there is no player, then make sure that an apple is located there
-                    apple_locations[apple_x, apple_y] = 1
+                    apple_times[apple] = self.N_apples - 1
         return
 
     def _is_hit_by_beam(self, target, beamer):
-        # Check to see if the beamer is inline with the target,
-        # and facing the target
-        # if they are, increase the target's frozen_time_remaining
-        # else return
-        pass
+        if beamer.orientation == 'NORTH' and target.y == beamer.y and target.x < beamer.x:
+            if target.hits == 0:
+                target.hits += 1
+            else:
+                target.frozen_time_remaining = self.N_tagged
+                target.hits = 0
+            return
+        elif beamer.orientation == 'SOUTH' and target.y == beamer.y and target.x > beamer.x:
+            if target.hits == 0:
+                target.hits += 1
+            else:
+                target.frozen_time_remaining = self.N_tagged
+                target.hits = 0
+            return
+        elif beamer.orientation == 'EAST' and target.y > beamer.y and target.x == beamer.x:
+            if target.hits == 0:
+                target.hits += 1
+            else:
+                target.frozen_time_remaining = self.N_tagged
+                target.hits = 0
+            return
+        elif beamer.orientation == 'WEST' and target.y < beamer.y and target.x == beamer.x:
+            if target.hits == 0:
+                target.hits += 1
+            else:
+                target.frozen_time_remaining = self.N_tagged
+                target.hits = 0
+            return
+        assert False, 'Invalid direction.'
 
     def __str__(self):
         return "gathering_game"
