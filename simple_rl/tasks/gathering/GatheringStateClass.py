@@ -18,6 +18,8 @@ COLORS = {
 class GatheringState(State):
 
     def __init__(self, agent1, agent2, apple_locations, apple_times):
+        super(GatheringState, self).__init__(data=[], is_terminal=False)
+
         # Locations of player 1 and player 2
         self.agent1, self.agent2 = agent1, agent2
         self.apple_locations = apple_locations
@@ -25,6 +27,10 @@ class GatheringState(State):
         self.apple_times = apple_times
         self.x_dim = apple_locations.shape[0]
         self.y_dim = apple_locations.shape[1]
+        # print 'LOOK HERE'
+        # print dir(self)
+
+
 
     def __hash__(self):
         return hash(tuple(str(self.agent1), str(self.agent2), str(self.apple_locations)))
@@ -74,6 +80,16 @@ class GatheringState(State):
 
         return np.transpose(board, axes=[2, 1, 0])
 
+    def generate_next_state(self):
+        # assume that we are just copying the current apple locations
+        # print self.apple_locations
+        # new_apple_locations = np.copyto(np.empty_like(self.apple_locations), self.apple_locations)
+        new_apple_locations = np.array(self.apple_locations)
+        new_apple_times = {}
+        for apple in self.apple_times.keys():
+            new_apple_times[apple] = self.apple_times[apple]
+        return GatheringState(self.agent1, self.agent2, new_apple_locations, new_apple_times)
+            
     def show(self):
         rgb = self.to_rgb()
         plt.imshow(rgb)
@@ -122,12 +138,7 @@ class GatheringAgent():
             return False
         return str(self) == str(other)
 
-    def generate_next_state(self):
-        new_apple_locations = np.copyto(np.empty_like(self.apple_locations), self.apple_locations)
-        new_apple_times = {}
-        for apple in apple_times.keys():
-            new_apple_times[apple] = apple_times[apple]
-        return GatheringState(self.agent1, self.agent2, new_apple_locations, new_apple_times)
+    
 
 if __name__ == '__main__':
     agent1 = GatheringAgent(32, 6, False, 'NORTH', 0, 0)

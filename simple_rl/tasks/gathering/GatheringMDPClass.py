@@ -66,46 +66,54 @@ class GatheringMDP(MarkovGameMDP):
 
         agent1 = GatheringAgent(31, 6, False, INITIAL_ORIENTATION, 0, 0)
         agent2 = GatheringAgent(32, 5, False, INITIAL_ORIENTATION, 0, 0)
-
         idx = np.array(possible_apple_locations)
-        print(idx)
+        initial_apple_times = dict()
+        for loc in possible_apple_locations:
+            initial_apple_times[loc] = random.randint(2, 7) # random spawn times for apples
+
+        # print(idx)
 
         initial_apple_locations = np.zeros(shape=[self.x_dim, self.y_dim],
             dtype=np.int32)
         initial_apple_locations[idx[:, 0], idx[:, 1]] = 1
-        print(initial_apple_locations)
+        # print(initial_apple_locations)
 
         MarkovGameMDP.__init__(
             self,
-            GatheringMDP.ACTIONS,
+            ACTIONS,
             self._transition_func,
             self._reward_func,
-            init_state=GatheringState(agent1, agent2, initial_apple_locations),
+            init_state=GatheringState(agent1, agent2, initial_apple_locations, initial_apple_times),
         )
 
     def _reward_func(self, state, action_dict):
         # Repeat computations above & update player location if they moved.
-        agent_a, agent_b = action_dict.keys()[0], action_dict.keys()[1]
+        agent_a, agent_b = state.agent1, state.agent2
+        agent_a_name, agent_b_name = action_dict.keys()[0], action_dict.keys()[1]
+        # print action_dict
+        # print state
         reward_dict = {}
         if state.apple_locations[agent_a.x, agent_a.y] == 1:
-            reward_dict[agent_a] = 1
+            reward_dict[agent_a_name] = 1
         else:
-            reward_dict[agent_a] = 0
+            reward_dict[agent_a_name] = 0
         if state.apple_locations[agent_b.x, agent_b.y] == 1:
-            reward_dict[agent_b] = 1
+            reward_dict[agent_b_name] = 1
         else:
-            reward_dict[agent_b] = 0
+            reward_dict[agent_b_name] = 0
         return reward_dict
 
     def _transition_func(self, state, action_dict):
         # Repeat computations above & update player location if they moved.
-        agent_a, agent_b = action_dict.keys()[0], action_dict.keys()[1]
-        action_a, action_b = action_dict[agent_a], action_dict[agent_b]
+        agent_a_name, agent_b_name = action_dict.keys()[0], action_dict.keys()[1]
+        action_a, action_b = action_dict[agent_a_name], action_dict[agent_b_name]
+
+        agent_a, agent_b = state.agent1, state.agent2
 
         ## we should be creating a new object based on the old one and returning that
         ## but maintain old agents
         newState = state.generate_next_state()
-        self._update_apples(nextState)
+        self._update_apples(newState)
 
         # Two hits leads to being frozen, hits reset after -- not consecutive
         if agent_a.frozen_time_remaining > 0:
@@ -159,25 +167,28 @@ class GatheringMDP(MarkovGameMDP):
             elif act == 'rotate_right':
                 agent.orientation = ROTATE_RIGHT[agent.orientation]
 
-        return nextState
+        return newState
 
     def _can_perform_move(self, agent, action):
         if not action.startswith('step'):
             return True
+
         final_pos_x, final_pos_y = self._get_next_location(agent, action)
+        # print final_pos_x
+        # print final_pos_y
         return final_pos_x > 0 and \
-                final_pos_x < x_dim - 1 and \
+                final_pos_x < self.x_dim - 1 and \
                 final_pos_y > 0 and \
-                final_pos_y < y_dim - 1
+                final_pos_y < self.y_dim - 1
 
     def _get_next_location(self, agent, action):
         if not action.startswith('step'):
             return agent.x, agent.y
-        movement = np.multiply(
+        movement = np.dot(
             ROTATION_MATRICES[agent.orientation],
             MOVEMENT_VECTOR[action],
         )
-        return agent.x + movement[0], agent.y + movement[1]
+        return agent.x + movement[0][0], agent.y + movement[1][0]
 
     # Generate apples based on parameters and pick them up
     ## apples appear after people have moved and not where people are located
@@ -195,16 +206,17 @@ class GatheringMDP(MarkovGameMDP):
                 state.apple_times[apple] = 0
                 state.apple_locations[apple_x, apple_y] = 1
             elif state.apple_times[apple] == 0:
-                assert apple_locations[apple_x, apple_y] == 1, 'Apples not generated properly'
+                assert state.apple_locations[apple_x, apple_y] == 1, 'Apples not generated properly'
                 # if a player is there, remove the apple from the location
                 #     and increase the apple time by N_apples
                 if (state.agent1.x == apple_x and state.agent1.y == apple_y) \
                     or (state.agent2.x == apple_x and state.agent2.y == apple_y):
-                    apple_locations[apple_x, apple_y] = 0
-                    apple_times[apple] = self.N_apples - 1
+                    state.apple_locations[apple_x, apple_y] = 0
+                    state.apple_times[apple] = self.N_apples - 1
         return
 
     def _is_hit_by_beam(self, target, beamer):
+        print beamer.orientation
         if beamer.orientation == 'NORTH' and target.y == beamer.y and target.x < beamer.x:
             if target.hits == 0:
                 target.hits += 1
@@ -233,7 +245,6 @@ class GatheringMDP(MarkovGameMDP):
                 target.frozen_time_remaining = self.N_tagged
                 target.hits = 0
             return
-        assert False, 'Invalid direction.'
 
     def __str__(self):
         return "gathering_game"
