@@ -20,3 +20,5 @@ from func_approx.LinearQLearnerAgentClass import LinearQLearnerAgent
 from func_approx.LinearSarsaAgentClass import LinearSarsaAgent
 
 from bandits.LinUCBAgentClass import LinUCBAgent
+
+# from dqn.DQNAgentClass import DQNAgent
