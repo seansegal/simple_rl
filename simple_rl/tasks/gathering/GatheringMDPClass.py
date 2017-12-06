@@ -69,7 +69,7 @@ class GatheringMDP(MarkovGameMDP):
         idx = np.array(possible_apple_locations)
         initial_apple_times = dict()
         for loc in possible_apple_locations:
-            initial_apple_times[loc] = random.randint(2, 7) # random spawn times for apples
+            initial_apple_times[loc] = 1 #random.randint(2, 7) # random spawn times for apples
 
         # print(idx)
 
@@ -144,7 +144,7 @@ class GatheringMDP(MarkovGameMDP):
             b_x, b_y = self._get_next_location(agent_b, action_b)
 
         if a_x == b_x and a_y == b_y:
-            if (agent_a.x != a_x or agent_y != a_y) and (agent_b.x != b_x or agent_b.y != b_y):
+            if (agent_a.x != a_x or agent_a.y != a_y) and (agent_b.x != b_x or agent_b.y != b_y):
                 # 50 / 50 chance when both moving into same space
                     if random.random() > 0.5:
                         agent_a.x, agent_a.y = a_x, a_y
@@ -170,6 +170,8 @@ class GatheringMDP(MarkovGameMDP):
         return newState
 
     def _can_perform_move(self, agent, action):
+        if action == None:
+            return False
         if not action.startswith('step'):
             return True
 
@@ -206,7 +208,8 @@ class GatheringMDP(MarkovGameMDP):
                 state.apple_times[apple] = 0
                 state.apple_locations[apple_x, apple_y] = 1
             elif state.apple_times[apple] == 0:
-                assert state.apple_locations[apple_x, apple_y] == 1, 'Apples not generated properly'
+                # TODO: Figure out why the below assert statement exists
+                # assert state.apple_locations[apple_x, apple_y] == 1, 'Apples not generated properly'
                 # if a player is there, remove the apple from the location
                 #     and increase the apple time by N_apples
                 if (state.agent1.x == apple_x and state.agent1.y == apple_y) \
@@ -216,7 +219,6 @@ class GatheringMDP(MarkovGameMDP):
         return
 
     def _is_hit_by_beam(self, target, beamer):
-        print beamer.orientation
         if beamer.orientation == 'NORTH' and target.y == beamer.y and target.x < beamer.x:
             if target.hits == 0:
                 target.hits += 1

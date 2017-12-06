@@ -16,10 +16,10 @@ def main(open_plot=True):
     gathering = GatheringMDP(gamma, possible_apple_locations, N_apples, N_tagged)
     
     rand_agent = RandomAgent(actions=gathering.get_actions())
-    fixed_action = random.choice(gathering.get_actions())
-    fixed_agent = FixedPolicyAgent(policy=lambda s:fixed_action)
+    # fixed_action = random.choice(gathering.get_actions())
+    fixed_agent = FixedPolicyAgent(policy=lambda s:"step_left")
     print 'update'
-    play_markov_game([fixed_agent, rand_agent], gathering, instances=15, episodes=1, steps=40, open_plot=open_plot) 
+    play_markov_game([fixed_agent, rand_agent], gathering, instances=15, episodes=1, steps=1000, open_plot=open_plot) 
     # augment play_markov_game with a named parameter with default false
     gathering.get_init_state().show()
 
