@@ -17,14 +17,20 @@ COLORS = {
 
 class GatheringState(State):
 
-    def __init__(self, agent1, agent2, apple_locations):
+    def __init__(self, agent1, agent2, apple_locations, apple_times):
+        super(GatheringState, self).__init__(data=[], is_terminal=False)
 
         # Locations of player 1 and player 2
         self.agent1, self.agent2 = agent1, agent2
-
         self.apple_locations = apple_locations
+        # TODO: 1. Incorporate apple_times into hash, str, and eq
+        self.apple_times = apple_times
         self.x_dim = apple_locations.shape[0]
         self.y_dim = apple_locations.shape[1]
+        # print 'LOOK HERE'
+        # print dir(self)
+
+
 
     def __hash__(self):
         return hash(tuple(str(self.agent1), str(self.agent2), str(self.apple_locations)))
@@ -48,10 +54,6 @@ class GatheringState(State):
         orientation = self.agent2.get_orientation()
         board[:, orientation[0], orientation[1]] = COLORS['orientation']
 
-        # Agents
-        board[:, self.agent1.x, self.agent1.y] = COLORS['agent1']
-        board[:, self.agent2.x, self.agent2.y] = COLORS['agent2']
-
         # Beams
         if self.agent1.is_shining:
             beam = self.agent1.get_beam(self.x_dim, self.y_dim)
@@ -61,21 +63,33 @@ class GatheringState(State):
             board[:, beam[0], beam[1]] = np.transpose(np.ones(shape=[beam[2], 1])*COLORS['light'])
 
         # Apples
-
         board[0, (self.apple_locations == 1)] = COLORS['apple'][0]
         board[1, (self.apple_locations == 1)] = COLORS['apple'][1]
         board[2, (self.apple_locations == 1)] = COLORS['apple'][2]
+
+        # Agents
+        board[:, self.agent1.x, self.agent1.y] = COLORS['agent1']
+        board[:, self.agent2.x, self.agent2.y] = COLORS['agent2']
 
         # Walls
         board[:, np.arange(0, self.x_dim), 0] = np.transpose(np.ones(shape=[self.x_dim, 1])*COLORS['walls'])
         board[:, np.arange(0, self.x_dim), self.y_dim - 1] = np.transpose(np.ones(shape=[self.x_dim, 1])*COLORS['walls'])
         board[:, 0, np.arange(0, self.y_dim)] = np.transpose(np.ones(shape=[self.y_dim, 1])*COLORS['walls'])
         board[:, self.x_dim - 1, np.arange(0, self.y_dim)] = np.transpose(np.ones(shape=[self.y_dim, 1])*COLORS['walls'])
-
         board = board/(255.0)
+
         return np.transpose(board, axes=[2, 1, 0])
 
-
+    def generate_next_state(self):
+        # assume that we are just copying the current apple locations
+        # print self.apple_locations
+        # new_apple_locations = np.copyto(np.empty_like(self.apple_locations), self.apple_locations)
+        new_apple_locations = np.array(self.apple_locations)
+        new_apple_times = {}
+        for apple in self.apple_times.keys():
+            new_apple_times[apple] = self.apple_times[apple]
+        return GatheringState(self.agent1, self.agent2, new_apple_locations, new_apple_times)
+            
     def show(self):
         rgb = self.to_rgb()
         plt.imshow(rgb)
@@ -97,7 +111,6 @@ class GatheringAgent():
             return self.x - 1, self.y
         if self.orientation == 'EAST':
             return self.x + 1, self.y
-
         assert False, 'Invalid direction.'
 
     def get_beam(self, x_dim, y_dim):
@@ -111,7 +124,6 @@ class GatheringAgent():
             return np.arange(0, orientation[0] + 1), orientation[1], orientation[0] + 1
         if self.orientation == 'EAST':
             return np.arange(orientation[0], x_dim), orientation[1], x_dim - orientation[0]
-
         assert False, 'Invalid direction.'
 
     def __hash__(self):
@@ -126,6 +138,7 @@ class GatheringAgent():
             return False
         return str(self) == str(other)
 
+    
 
 if __name__ == '__main__':
     agent1 = GatheringAgent(32, 6, False, 'NORTH', 0, 0)
