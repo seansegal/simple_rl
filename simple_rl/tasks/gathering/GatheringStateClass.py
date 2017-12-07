@@ -18,7 +18,7 @@ COLORS = {
 
 class GatheringState(State):
 
-    def __init__(self, agent1, agent2, apple_locations, apple_times):
+    def __init__(self, agent1, agent2, apple_locations, apple_times, render_time=0.01):
         super(GatheringState, self).__init__(data=[], is_terminal=False)
 
         # Locations of player 1 and player 2
@@ -28,6 +28,7 @@ class GatheringState(State):
         self.apple_times = apple_times
         self.x_dim = apple_locations.shape[0]
         self.y_dim = apple_locations.shape[1]
+        self.render_time = render_time
 
 
 
@@ -93,7 +94,7 @@ class GatheringState(State):
     def show(self):
         rgb = self.to_rgb()
         plt.imshow(rgb)
-        plt.pause(.1)
+        plt.pause(self.render_time)
         plt.draw()
 
 class GatheringAgent():

@@ -62,9 +62,11 @@ class GatheringMDP(MarkovGameMDP):
         N_apples,
         N_tagged,
         dim=(35, 13),
+        render=False,
     ):
         self.gamma, self.N_apples, self.N_tagged = gamma, N_apples, N_tagged
         self.x_dim, self.y_dim = dim[0], dim[1]
+        self.render = render
 
         agent1 = GatheringAgent(31, 6, False, INITIAL_ORIENTATION, 0, 0)
         agent2 = GatheringAgent(32, 5, False, INITIAL_ORIENTATION, 0, 0)
@@ -173,7 +175,8 @@ class GatheringMDP(MarkovGameMDP):
                 agent.orientation = ROTATE_LEFT[agent.orientation]
             elif act == 'rotate_right':
                 agent.orientation = ROTATE_RIGHT[agent.orientation]
-        newState.show()
+        if self.render:
+            newState.show()
         return newState
 
     def _can_perform_move(self, agent, action):

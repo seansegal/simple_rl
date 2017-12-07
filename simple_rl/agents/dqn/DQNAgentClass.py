@@ -27,8 +27,9 @@ class DQNAgent(Agent):
         self.curr_episode = 0
         self.update_freq = 4
         self.batch_size = 32
+        self.update_target = 100
         self.should_train = True
-        self.print_loss = True
+        self.print_loss, self.print_every = True, 10000
 
         tau = 0.001
         self.target_ops = updateTargetGraph(tf.trainable_variables(), tau)
@@ -48,8 +49,12 @@ class DQNAgent(Agent):
                 else:
                     y[i] = r[i] + targetVals[i]
             l = self.mainQN.train(self.sess, s, a, y)
-            if self.print_loss:
-                print('LOSS',  l)
+
+            if self.print_loss and (self.total_steps % self.print_every == 0):
+                print 'Loss for step {}: {}'.format(self.total_steps, l)
+
+            updateTarget(self.target_ops, self.sess)
+
 
         # Not Training (or after training)
         if random.random() < self.epsilon:
