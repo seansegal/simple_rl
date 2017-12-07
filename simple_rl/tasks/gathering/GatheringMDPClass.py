@@ -226,33 +226,42 @@ class GatheringMDP(MarkovGameMDP):
         return
 
     def _is_hit_by_beam(self, target, beamer):
-        if beamer.orientation == 'NORTH' and target.y == beamer.y and target.x < beamer.x:
+        if beamer.orientation == 'NORTH' and target.x == beamer.x and target.y < beamer.y:
             if target.hits == 0:
+                # print 'hit 1'
                 target.hits += 1
             else:
                 target.frozen_time_remaining = self.N_tagged
                 target.hits = 0
+                # print 'hit 2'
             return
-        elif beamer.orientation == 'SOUTH' and target.y == beamer.y and target.x > beamer.x:
+        elif beamer.orientation == 'SOUTH' and target.x == beamer.x and target.y > beamer.y:
             if target.hits == 0:
+                # print 'hit 1'
                 target.hits += 1
+
             else:
                 target.frozen_time_remaining = self.N_tagged
                 target.hits = 0
+                # print 'hit 2'
             return
-        elif beamer.orientation == 'EAST' and target.y > beamer.y and target.x == beamer.x:
+        elif beamer.orientation == 'EAST' and target.x > beamer.x and target.y == beamer.y:
             if target.hits == 0:
+                # print 'hit 1'
                 target.hits += 1
             else:
                 target.frozen_time_remaining = self.N_tagged
                 target.hits = 0
+                # print 'hit 2'
             return
-        elif beamer.orientation == 'WEST' and target.y < beamer.y and target.x == beamer.x:
+        elif beamer.orientation == 'WEST' and target.x < beamer.x and target.y == beamer.y:
             if target.hits == 0:
+                # print 'hit 1'
                 target.hits += 1
             else:
                 target.frozen_time_remaining = self.N_tagged
                 target.hits = 0
+                # print 'hit 2'
             return
 
     def __str__(self):
