@@ -11,7 +11,7 @@ from simple_rl.tasks.gathering.GatheringMDPClass import GatheringMDP
 from simple_rl.run_experiments import play_markov_game
 from simple_rl.agents import FixedPolicyAgent
 
-from simple_rl.agents.dqn import DQNAgent
+from simple_rl.agents.dqn.DQNAgentClass import DQNAgent
 from simple_rl.tasks import RockPaperScissorsMDP
 
 def main(open_plot=True):

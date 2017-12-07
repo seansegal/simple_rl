@@ -58,7 +58,7 @@ class DQNAgent(Agent):
             img = state.to_rgb()
             action = self.mainQN.get_best_action(self.sess, img)[0]
 
-        if self.prev_state != None and self.prev_action != None:
+        if self.prev_state is None and self.prev_action is None:
             self.experience_buffer.add((self.prev_state, self.prev_action, reward, state.to_rgb(), state.is_terminal()))
 
         self.prev_state, self.prev_action = state.to_rgb(), action
