@@ -27,8 +27,7 @@ class GatheringState(State):
         self.apple_times = apple_times
         self.x_dim = apple_locations.shape[0]
         self.y_dim = apple_locations.shape[1]
-        # print 'LOOK HERE'
-        # print dir(self)
+
 
 
 
@@ -50,8 +49,6 @@ class GatheringState(State):
 
         # Orientation (do this first so that more important things override)
         orientation = self.agent1.get_orientation()
-        print orientation[0]
-        print orientation[1]
         board[:, orientation[0], orientation[1]] = COLORS['orientation']
         orientation = self.agent2.get_orientation()
         board[:, orientation[0], orientation[1]] = COLORS['orientation']
@@ -105,10 +102,6 @@ class GatheringAgent():
         self.frozen_time_remaining = frozen_time_remaining
 
     def get_orientation(self):
-        print 'x'
-        print self.x
-        print 'y'
-        print self.y
         if self.orientation == 'NORTH':
             return self.x, self.y - 1
         if self.orientation == 'SOUTH':

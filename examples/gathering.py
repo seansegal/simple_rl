@@ -21,10 +21,10 @@ def main(open_plot=True):
 
     rand_agent = RandomAgent(actions=gathering.get_actions())
 
-    dqn = DQNAgent(gathering.get_actions(), num_channels=3)
+    dqn = DQNAgent(gathering.get_actions(), x_dim=35, y_dim=13, num_channels=3)
     # fixed_action = random.choice(gathering.get_actions())
     fixed_agent = FixedPolicyAgent(policy=lambda s:"step_left")
-    play_markov_game([dqn, rand_agent], gathering, instances=1, episodes=1, steps=10000, open_plot=open_plot)
+    play_markov_game([dqn, rand_agent], gathering, instances=5, episodes=10, steps=100000, open_plot=open_plot)
     # augment play_markov_game with a named parameter with default false
     # gathering.get_init_state().show()
 

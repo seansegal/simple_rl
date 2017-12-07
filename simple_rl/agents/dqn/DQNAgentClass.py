@@ -58,7 +58,7 @@ class DQNAgent(Agent):
             img = state.to_rgb()
             action = self.mainQN.get_best_action(self.sess, img)[0]
 
-        if self.prev_state is None and self.prev_action is None:
+        if not (self.prev_state is None) and not (self.prev_action is None):
             self.experience_buffer.add((self.prev_state, self.prev_action, reward, state.to_rgb(), state.is_terminal()))
 
         self.prev_state, self.prev_action = state.to_rgb(), action
@@ -88,7 +88,7 @@ class QNetwork():
         self.x_dim, self.y_dim = x_dim, y_dim
         self.num_channels = num_channels
 
-        self.image = tf.placeholder(tf.float32, shape=[None, self.num_channels, self.x_dim, self.y_dim], name='image')
+        self.image = tf.placeholder(tf.float32, shape=[None, self.y_dim, self.x_dim, self.num_channels], name='image')
         self.targetQ = tf.placeholder(tf.float32, shape=[None], name='targetQ')
 
         self.actions = tf.placeholder(tf.int32, shape=[None], name='actions')
@@ -136,6 +136,7 @@ class ExperienceBuffer():
     def add(self, experience):
         if len(self.buffer) == self.buffer_size:
             self.buffer.pop(0)
+
         self.buffer.append(experience)
 
     def sample(self, size):

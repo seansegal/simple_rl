@@ -190,7 +190,7 @@ class GatheringMDP(MarkovGameMDP):
             ROTATION_MATRICES[agent.orientation],
             MOVEMENT_VECTOR[action],
         )
-        return agent.x + movement[0][0], agent.y + movement[1][0]
+        return agent.x + movement[0, 0], agent.y + movement[1, 0]
 
     # Generate apples based on parameters and pick them up
     ## apples appear after people have moved and not where people are located
