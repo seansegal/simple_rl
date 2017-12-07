@@ -5,6 +5,8 @@ Dilemmas. '''
 # Python imports.
 import random
 import numpy as np
+import time
+from matplotlib.pyplot import clf
 
 # Other imports.
 from simple_rl.mdp.markov_game.MarkovGameMDPClass import MarkovGameMDP
@@ -69,7 +71,7 @@ class GatheringMDP(MarkovGameMDP):
         idx = np.array(possible_apple_locations)
         initial_apple_times = dict()
         for loc in possible_apple_locations:
-            initial_apple_times[loc] = 1 #random.randint(2, 7) # random spawn times for apples
+            initial_apple_times[loc] = 0 #random.randint(2, 7) # random spawn times for apples
 
         # print(idx)
 
@@ -109,6 +111,9 @@ class GatheringMDP(MarkovGameMDP):
         action_a, action_b = action_dict[agent_a_name], action_dict[agent_b_name]
 
         agent_a, agent_b = state.agent1, state.agent2
+
+        agent_a.is_shining = False
+        agent_b.is_shining = False
 
         ## we should be creating a new object based on the old one and returning that
         ## but maintain old agents
@@ -162,11 +167,13 @@ class GatheringMDP(MarkovGameMDP):
         agent_b.x, agent_b.y = b_x, b_y
 
         for agent, act in [(agent_a, action_a), (agent_b, action_b)]:
+            if act == 'use_beam':
+                agent.is_shining = True
             if act == 'rotate_left':
                 agent.orientation = ROTATE_LEFT[agent.orientation]
             elif act == 'rotate_right':
                 agent.orientation = ROTATE_RIGHT[agent.orientation]
-
+        newState.show()
         return newState
 
     def _can_perform_move(self, agent, action):
@@ -209,7 +216,7 @@ class GatheringMDP(MarkovGameMDP):
                 state.apple_locations[apple_x, apple_y] = 1
             elif state.apple_times[apple] == 0:
                 # TODO: Figure out why the below assert statement exists
-                # assert state.apple_locations[apple_x, apple_y] == 1, 'Apples not generated properly'
+                state.apple_locations[apple_x, apple_y] = 1
                 # if a player is there, remove the apple from the location
                 #     and increase the apple time by N_apples
                 if (state.agent1.x == apple_x and state.agent1.y == apple_y) \

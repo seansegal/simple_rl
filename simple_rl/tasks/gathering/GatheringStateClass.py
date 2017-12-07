@@ -3,6 +3,7 @@
 # Other imports.
 from simple_rl.mdp.StateClass import State
 import numpy as np
+import time
 
 import matplotlib.pyplot as plt # NOTE: for debugging
 
@@ -92,7 +93,8 @@ class GatheringState(State):
     def show(self):
         rgb = self.to_rgb()
         plt.imshow(rgb)
-        plt.show()
+        plt.pause(.1)
+        plt.draw()
 
 class GatheringAgent():
 
