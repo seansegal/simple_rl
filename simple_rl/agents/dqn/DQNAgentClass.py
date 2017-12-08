@@ -6,12 +6,13 @@ from simple_rl.agents.AgentClass import Agent
 import tensorflow as tf
 import numpy as np
 import random
+import os
 
 class DQNAgent(Agent):
 
     NAME = "dqn-deep-mind"
 
-    def __init__(self, actions, name=NAME, learning_rate=1e-4,  x_dim=21, y_dim=16, eps_start=1.0, eps_end=0.1, num_channels=3):
+    def __init__(self, actions, name=NAME, learning_rate=1e-4,  x_dim=21, y_dim=16, eps_start=1.0, eps_end=0.1, num_channels=3, should_train=True, from_checkpoint=None):
         Agent.__init__(self, name=name, actions=[])
         self.learning_rate = learning_rate
         self.x_dim, self.y_dim = x_dim, y_dim
@@ -28,12 +29,22 @@ class DQNAgent(Agent):
         self.update_freq = 4
         self.batch_size = 32
         self.update_target = 100
-        self.should_train = True
+        self.should_train = should_train
+        self.should_save, self.save_every = True, 100000
         self.print_loss, self.print_every = True, 10000
-
+        self.saver = tf.train.Saver()
+        # Parameters for updating target network.
         tau = 0.001
         self.target_ops = updateTargetGraph(tf.trainable_variables(), tau)
         self.sess.run(tf.global_variables_initializer())
+
+        # Load from a checkpoint
+        if not (from_checkpoint is None):
+            if os.path.exists(from_checkpoint):
+                self.saver.restore(self.sess, from_checkpoint)
+                print 'Restored model from checkpoint: {}'.format(from_checkpoint)
+            else:
+                raise ValueError('Checkpoint file does not exist.')
 
     def act(self, state, reward):
         # Training
@@ -70,6 +81,13 @@ class DQNAgent(Agent):
 
         if self.epsilon > self.epsilon_end:
             self.epsilon -= self.epsilon_decay
+
+
+        # Saving checkpoints (NOTE: We only save checkpoints when training)
+        if self.should_train and self.should_save and self.total_steps > 0 and self.total_steps % self.save_every == 0:
+            save_path = self.saver.save(self.sess, '/tmp/{}.ckpt'.format(self.name))
+            print 'At step {}, saved model to {}'.format(self.total_steps, save_path)
+
 
         self.curr_step += 1
         self.total_steps += 1
