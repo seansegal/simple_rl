@@ -129,13 +129,14 @@ class GatheringMDP(MarkovGameMDP):
                 action_a = None
         if agent_b.frozen_time_remaining > 0:
             agent_b.frozen_time_remaining -= 1
+
             if agent_b.frozen_time_remaining > 0:
                 action_b = None
 
         if action_a == 'use_beam' and agent_b.frozen_time_remaining == 0:
-            self._is_hit_by_beam(agent_a, agent_b)
-        if action_b == 'use_beam' and agent_a.frozen_time_remaining == 0:
             self._is_hit_by_beam(agent_b, agent_a)
+        if action_b == 'use_beam' and agent_a.frozen_time_remaining == 0:
+            self._is_hit_by_beam(agent_a, agent_b)
 
         # Check if they are frozen again
         if agent_a.frozen_time_remaining > 0:
