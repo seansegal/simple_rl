@@ -67,20 +67,16 @@ class GatheringMDP(MarkovGameMDP):
         self.gamma, self.N_apples, self.N_tagged = gamma, N_apples, N_tagged
         self.x_dim, self.y_dim = dim[0], dim[1]
         self.render = render
-
         agent1 = GatheringAgent(31, 6, False, INITIAL_ORIENTATION, 0, 0)
         agent2 = GatheringAgent(32, 5, False, INITIAL_ORIENTATION, 0, 0)
         idx = np.array(possible_apple_locations)
         initial_apple_times = dict()
         for loc in possible_apple_locations:
-            initial_apple_times[loc] = 0 #random.randint(2, 7) # random spawn times for apples
-
-        # print(idx)
+            initial_apple_times[loc] = 0
 
         initial_apple_locations = np.zeros(shape=[self.x_dim, self.y_dim],
             dtype=np.int32)
         initial_apple_locations[idx[:, 0], idx[:, 1]] = 1
-        # print(initial_apple_locations)
 
         MarkovGameMDP.__init__(
             self,
@@ -94,8 +90,6 @@ class GatheringMDP(MarkovGameMDP):
         # Repeat computations above & update player location if they moved.
         agent_a, agent_b = state.agent1, state.agent2
         agent_a_name, agent_b_name = action_dict.keys()[0], action_dict.keys()[1]
-        # print action_dict
-        # print state
         reward_dict = {}
         if state.apple_locations[agent_a.x, agent_a.y] == 1:
             reward_dict[agent_a_name] = 1
@@ -117,6 +111,9 @@ class GatheringMDP(MarkovGameMDP):
         agent_a.is_shining = False
         agent_b.is_shining = False
 
+        print(agent_a_name, str(agent_a))
+        print(agent_b_name, str(agent_b))
+
         ## we should be creating a new object based on the old one and returning that
         ## but maintain old agents
         newState = state.generate_next_state()
@@ -124,12 +121,11 @@ class GatheringMDP(MarkovGameMDP):
 
         # Two hits leads to being frozen, hits reset after -- not consecutive
         if agent_a.frozen_time_remaining > 0:
-            newState.agent1.frozen_time_remaining -= 1
-            if newState.agent1.frozen_time_remaining > 0:
+            newState.agent_a.frozen_time_remaining -= 1
+            if newState.agent_a.frozen_time_remaining > 0:
                 action_a = None
         if agent_b.frozen_time_remaining > 0:
             agent_b.frozen_time_remaining -= 1
-
             if agent_b.frozen_time_remaining > 0:
                 action_b = None
 
