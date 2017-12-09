@@ -25,6 +25,8 @@ class FixedPolicyAgent(Agent):
         Returns:
             (str): action.
         '''
+        if self.name == 'reward':
+            print 'Reward: {}'.format(reward)
         return self.policy(state)
 
     def set_policy(self, new_policy):

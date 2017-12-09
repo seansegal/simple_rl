@@ -23,7 +23,7 @@ class DQNAgent(Agent):
         self.sess = tf.Session()
         self.experience_buffer = ExperienceBuffer(buffer_size=10e4)
         self.prev_state, self.prev_action = None, None
-        self.epsilon, self.epsilon_decay, self.epsilon_end = eps_start, 0.0001, eps_end
+        self.epsilon, self.epsilon_decay, self.epsilon_end = eps_start, 0.000001, eps_end
         self.curr_step, self.total_steps = 0, 0
         self.curr_episode = 0
         self.update_freq = 4
@@ -33,6 +33,7 @@ class DQNAgent(Agent):
         self.should_save, self.save_every = True, 100000
         self.print_loss, self.print_every = True, 10000
         self.saver = tf.train.Saver()
+        self.action_counts = np.zeros(self.num_actions)
         # Parameters for updating target network.
         tau = 0.001
         self.target_ops = updateTargetGraph(tf.trainable_variables(), tau)
@@ -47,6 +48,7 @@ class DQNAgent(Agent):
                 raise ValueError('Checkpoint file does not exist.')
 
     def act(self, state, reward):
+
         # Training
         if self.should_train and self.total_steps > 0 and self.total_steps % self.update_freq == 0:
             s, a, r, s2, t = self.experience_buffer.sample(self.batch_size)
@@ -95,6 +97,7 @@ class DQNAgent(Agent):
             self.curr_step = 0
             self.curr_episode += 1
 
+        self.action_counts[action] += 1
         return self.actions[action]
 
 
