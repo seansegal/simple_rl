@@ -140,6 +140,9 @@ class GatheringAgent():
             return False
         return str(self) == str(other)
 
+    def clone(self):
+        return GatheringAgent(self.x, self.y, self.is_shining, self.orientation, self.hits, self.frozen_time_remaining)
+
 
 
 if __name__ == '__main__':

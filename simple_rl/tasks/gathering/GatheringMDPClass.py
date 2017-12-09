@@ -88,41 +88,15 @@ class GatheringMDP(MarkovGameMDP):
 
     def _reward_func(self, state, action_dict):
         # Repeat computations above & update player location if they moved.
-        agent_a, agent_b = state.agent1, state.agent2
-        agent_a_name, agent_b_name = action_dict.keys()[0], action_dict.keys()[1]
-        reward_dict = {}
-        if state.apple_locations[agent_a.x, agent_a.y] == 1:
-            reward_dict[agent_a_name] = 1
-        else:
-            reward_dict[agent_a_name] = 0
-        if state.apple_locations[agent_b.x, agent_b.y] == 1:
-            reward_dict[agent_b_name] = 1
-        else:
-            reward_dict[agent_b_name] = 0
-        return reward_dict
-
-    def _transition_func(self, state, action_dict):
-        # Repeat computations above & update player location if they moved.
+        agent_a, agent_b = state.agent1.clone(), state.agent2.clone()
         agent_a_name, agent_b_name = action_dict.keys()[0], action_dict.keys()[1]
         action_a, action_b = action_dict[agent_a_name], action_dict[agent_b_name]
-
-        agent_a, agent_b = state.agent1, state.agent2
-
-        agent_a.is_shining = False
-        agent_b.is_shining = False
-
-        print(agent_a_name, str(agent_a))
-        print(agent_b_name, str(agent_b))
-
-        ## we should be creating a new object based on the old one and returning that
-        ## but maintain old agents
-        newState = state.generate_next_state()
-        self._update_apples(newState)
+        reward_dict = {}
 
         # Two hits leads to being frozen, hits reset after -- not consecutive
         if agent_a.frozen_time_remaining > 0:
-            newState.agent_a.frozen_time_remaining -= 1
-            if newState.agent_a.frozen_time_remaining > 0:
+            agent_a.frozen_time_remaining -= 1
+            if agent_a.frozen_time_remaining > 0:
                 action_a = None
         if agent_b.frozen_time_remaining > 0:
             agent_b.frozen_time_remaining -= 1
@@ -151,9 +125,9 @@ class GatheringMDP(MarkovGameMDP):
             if (agent_a.x != a_x or agent_a.y != a_y) and (agent_b.x != b_x or agent_b.y != b_y):
                 # 50 / 50 chance when both moving into same space
                     if random.random() > 0.5:
-                        agent_a.x, agent_a.y = a_x, a_y
+                        a_x, a_y = agent_a.x, agent_a.y
                     else:
-                        agent_b.x, agent_b.y = b_x, b_y
+                        b_x, b_y = agent_b.x, agent_b.y
             else:
                 a_x, a_y = agent_a.x, agent_a.y
                 b_x, b_y = agent_b.x, agent_b.y
@@ -172,6 +146,90 @@ class GatheringMDP(MarkovGameMDP):
                 agent.orientation = ROTATE_LEFT[agent.orientation]
             elif act == 'rotate_right':
                 agent.orientation = ROTATE_RIGHT[agent.orientation]
+
+        apple_locations = self._update_reward_apples(state)
+
+        if apple_locations[agent_a.x, agent_a.y] == 1:
+            reward_dict[agent_a_name] = 1
+        else:
+            reward_dict[agent_a_name] = 0
+        if apple_locations[agent_b.x, agent_b.y] == 1:
+            reward_dict[agent_b_name] = 1
+        else:
+            reward_dict[agent_b_name] = 0
+
+        return reward_dict
+
+    def _transition_func(self, state, action_dict):
+        # Repeat computations above & update player location if they moved.
+        agent_a_name, agent_b_name = action_dict.keys()[0], action_dict.keys()[1]
+        action_a, action_b = action_dict[agent_a_name], action_dict[agent_b_name]
+
+        agent_a, agent_b = state.agent1, state.agent2
+
+        agent_a.is_shining = False
+        agent_b.is_shining = False
+
+        ## we should be creating a new object based on the old one and returning that
+        ## but maintain old agents
+        newState = state.generate_next_state()
+
+        # Two hits leads to being frozen, hits reset after -- not consecutive
+        if agent_a.frozen_time_remaining > 0:
+            agent_a.frozen_time_remaining -= 1
+            if agent_a.frozen_time_remaining > 0:
+                action_a = None
+        if agent_b.frozen_time_remaining > 0:
+            agent_b.frozen_time_remaining -= 1
+            if agent_b.frozen_time_remaining > 0:
+                action_b = None
+
+        if action_a == 'use_beam' and agent_b.frozen_time_remaining == 0:
+            self._is_hit_by_beam(agent_b, agent_a)
+        if action_b == 'use_beam' and agent_a.frozen_time_remaining == 0:
+            self._is_hit_by_beam(agent_a, agent_b)
+
+        # Check if they are frozen again
+        if agent_a.frozen_time_remaining > 0:
+            action_a = None
+        if agent_b.frozen_time_remaining > 0:
+            action_b = None
+
+        a_x, a_y = agent_a.x, agent_a.y
+        if self._can_perform_move(agent_a, action_a):
+            a_x, a_y = self._get_next_location(agent_a, action_a)
+        b_x, b_y = agent_b.x, agent_b.y
+        if self._can_perform_move(agent_b, action_b):
+            b_x, b_y = self._get_next_location(agent_b, action_b)
+
+        if a_x == b_x and a_y == b_y:
+            if (agent_a.x != a_x or agent_a.y != a_y) and (agent_b.x != b_x or agent_b.y != b_y):
+                # 50 / 50 chance when both moving into same space
+                    if random.random() > 0.5:
+                        a_x, a_y = agent_a.x, agent_a.y
+                    else:
+                        b_x, b_y = agent_b.x, agent_b.y
+            else:
+                a_x, a_y = agent_a.x, agent_a.y
+                b_x, b_y = agent_b.x, agent_b.y
+        # handle swapping locations
+        elif a_x == agent_b.x and a_y == agent_b.y and b_x == agent_a.x and b_y == agent_a.y:
+            a_x, a_y = agent_a.x, agent_a.y
+            b_x, b_y = agent_b.x, agent_b.y
+
+        agent_a.x, agent_a.y = a_x, a_y
+        agent_b.x, agent_b.y = b_x, b_y
+
+        for agent, act in [(agent_a, action_a), (agent_b, action_b)]:
+            if act == 'use_beam':
+                agent.is_shining = True
+            if act == 'rotate_left':
+                agent.orientation = ROTATE_LEFT[agent.orientation]
+            elif act == 'rotate_right':
+                agent.orientation = ROTATE_RIGHT[agent.orientation]
+
+        self._update_state_apples(newState)
+
         if self.render:
             newState.show()
         return newState
@@ -183,8 +241,6 @@ class GatheringMDP(MarkovGameMDP):
             return True
 
         final_pos_x, final_pos_y = self._get_next_location(agent, action)
-        # print final_pos_x
-        # print final_pos_y
         return final_pos_x > 0 and \
                 final_pos_x < self.x_dim - 1 and \
                 final_pos_y > 0 and \
@@ -201,67 +257,61 @@ class GatheringMDP(MarkovGameMDP):
 
     # Generate apples based on parameters and pick them up
     ## apples appear after people have moved and not where people are located
-    def _update_apples(self, state):
+    def _update_state_apples(self, state):
         # iterate through apple Locations
         for apple in state.apple_times.keys():
             apple_x, apple_y = apple[0], apple[1]
-
             # if it is greater than 1, lower it
-            if state.apple_times[apple] > 1:
+            if state.apple_times[apple] > 0:
                 state.apple_times[apple] -= 1
-            # if it is 1, check to see if a player is there
-            elif state.apple_times[apple] == 1:
-                # generate an apple
-                state.apple_times[apple] = 0
-                state.apple_locations[apple_x, apple_y] = 1
             elif state.apple_times[apple] == 0:
-                # TODO: Figure out why the below assert statement exists
                 state.apple_locations[apple_x, apple_y] = 1
                 # if a player is there, remove the apple from the location
                 #     and increase the apple time by N_apples
                 if (state.agent1.x == apple_x and state.agent1.y == apple_y) \
                     or (state.agent2.x == apple_x and state.agent2.y == apple_y):
                     state.apple_locations[apple_x, apple_y] = 0
-                    state.apple_times[apple] = self.N_apples - 1
+                    state.apple_times[apple] = self.N_apples
         return
+
+    def _update_reward_apples(self, state):
+        # iterate through apple Locations
+        apple_locations = np.array(state.apple_locations)
+        for apple in state.apple_times.keys():
+            apple_x, apple_y = apple[0], apple[1]
+            if state.apple_times[(apple_x, apple_y)] <= 1:
+                apple_locations[apple_x, apple_y] = 1
+        return apple_locations
 
     def _is_hit_by_beam(self, target, beamer):
         if beamer.orientation == 'NORTH' and target.x == beamer.x and target.y < beamer.y:
             if target.hits == 0:
-                # print 'hit 1'
                 target.hits += 1
             else:
                 target.frozen_time_remaining = self.N_tagged
                 target.hits = 0
-                # print 'hit 2'
             return
         elif beamer.orientation == 'SOUTH' and target.x == beamer.x and target.y > beamer.y:
             if target.hits == 0:
-                # print 'hit 1'
                 target.hits += 1
 
             else:
                 target.frozen_time_remaining = self.N_tagged
                 target.hits = 0
-                # print 'hit 2'
             return
         elif beamer.orientation == 'EAST' and target.x > beamer.x and target.y == beamer.y:
             if target.hits == 0:
-                # print 'hit 1'
                 target.hits += 1
             else:
                 target.frozen_time_remaining = self.N_tagged
                 target.hits = 0
-                # print 'hit 2'
             return
         elif beamer.orientation == 'WEST' and target.x < beamer.x and target.y == beamer.y:
             if target.hits == 0:
-                # print 'hit 1'
                 target.hits += 1
             else:
                 target.frozen_time_remaining = self.N_tagged
                 target.hits = 0
-                # print 'hit 2'
             return
 
     def __str__(self):
