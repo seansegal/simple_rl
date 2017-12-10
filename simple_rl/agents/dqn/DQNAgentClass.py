@@ -12,7 +12,7 @@ class DQNAgent(Agent):
 
     NAME = "dqn-deep-mind"
 
-    def __init__(self, actions, name=NAME, learning_rate=1e-4,  x_dim=21, y_dim=16, eps_start=1.0, eps_end=0.1, num_channels=3, should_train=True, from_checkpoint=None):
+    def __init__(self, actions, name=NAME, learning_rate=1e-4,  x_dim=21, y_dim=16, eps_start=1.0, eps_decay=0.000001, eps_end=0.1, num_channels=3, should_train=True, from_checkpoint=None):
         Agent.__init__(self, name=name, actions=[])
         self.learning_rate = learning_rate
         self.x_dim, self.y_dim = x_dim, y_dim
@@ -23,7 +23,7 @@ class DQNAgent(Agent):
         self.sess = tf.Session()
         self.experience_buffer = ExperienceBuffer(buffer_size=10e4)
         self.prev_state, self.prev_action = None, None
-        self.epsilon, self.epsilon_decay, self.epsilon_end = eps_start, 0.000001, eps_end
+        self.epsilon, self.epsilon_decay, self.epsilon_end = eps_start, eps_decay, eps_end
         self.curr_step, self.total_steps = 0, 0
         self.curr_episode = 0
         self.update_freq = 4
@@ -48,7 +48,6 @@ class DQNAgent(Agent):
                 raise ValueError('Checkpoint file does not exist.')
 
     def act(self, state, reward):
-
         # Training
         if self.should_train and self.total_steps > 0 and self.total_steps % self.update_freq == 0:
             s, a, r, s2, t = self.experience_buffer.sample(self.batch_size)

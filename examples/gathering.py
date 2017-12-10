@@ -24,8 +24,8 @@ def main(open_plot=True):
     rand_agent = RandomAgent(actions=gathering.get_actions())
     # rand_agent2 = RandomAgent(name='randagent-2', actions=gathering.get_actions())
     # commented out dqn to make sure the game is working
-    dqn = DQNAgent(gathering.get_actions(), name='dqn1', x_dim=35, y_dim=13, num_channels=3, should_train=True, eps_start=1.0, eps_end = 0.1)
-    dqn2 = DQNAgent(gathering.get_actions(), name='dqn2', x_dim=35, y_dim=13, num_channels=3, should_train=True, eps_start=1.0, eps_end = 0.1)
+    dqn = DQNAgent(gathering.get_actions(), name='dqn1-1', x_dim=35, y_dim=13, num_channels=3, should_train=True, eps_start=1.0, eps_end = 0.1)
+    dqn2 = DQNAgent(gathering.get_actions(), name='dqn2-1', x_dim=35, y_dim=13, num_channels=3, should_train=True, eps_start=1.0, eps_end = 0.1)
     # fixed_action = random.choice(gathering.get_actions())
     # fixed_agent2 = FixedPolicyAgent(name='fixed', policy=lambda s: "stand_still")
     # fixed_agent = FixedPolicyAgent(policy=lambda s: "step_left")
