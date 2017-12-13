@@ -50,16 +50,18 @@ class GatheringState(State):
         board = np.zeros(shape=[3, self.x_dim, self.y_dim])
 
         # Orientation (do this first so that more important things override)
-        orientation = self.agent1.get_orientation()
-        board[:, orientation[0], orientation[1]] = COLORS['orientation']
-        orientation = self.agent2.get_orientation()
-        board[:, orientation[0], orientation[1]] = COLORS['orientation']
+        if self.agent1.frozen_time_remaining == 0:
+            orientation = self.agent1.get_orientation()
+            board[:, orientation[0], orientation[1]] = COLORS['orientation']
+        if self.agent2.frozen_time_remaining == 0:
+            orientation = self.agent2.get_orientation()
+            board[:, orientation[0], orientation[1]] = COLORS['orientation']
 
         # Beams
-        if self.agent1.is_shining:
+        if self.agent1.is_shining and self.agent1.frozen_time_remaining == 0:
             beam = self.agent1.get_beam(self.x_dim, self.y_dim)
             board[:, beam[0], beam[1]] = np.transpose(np.ones(shape=[beam[2], 1])*COLORS['light'])
-        if self.agent2.is_shining:
+        if self.agent2.is_shining and self.agent2.frozen_time_remaining == 0:
             beam = self.agent2.get_beam(self.x_dim, self.y_dim)
             board[:, beam[0], beam[1]] = np.transpose(np.ones(shape=[beam[2], 1])*COLORS['light'])
 
@@ -69,8 +71,10 @@ class GatheringState(State):
         board[2, (self.apple_locations == 1)] = COLORS['apple'][2]
 
         # Agents
-        board[:, self.agent1.x, self.agent1.y] = COLORS['agent1']
-        board[:, self.agent2.x, self.agent2.y] = COLORS['agent2']
+        if self.agent1.frozen_time_remaining == 0:
+            board[:, self.agent1.x, self.agent1.y] = COLORS['agent1']
+        if self.agent2.frozen_time_remaining == 0:
+            board[:, self.agent2.x, self.agent2.y] = COLORS['agent2']
 
         # Walls
         board[:, np.arange(0, self.x_dim), 0] = np.transpose(np.ones(shape=[self.x_dim, 1])*COLORS['walls'])

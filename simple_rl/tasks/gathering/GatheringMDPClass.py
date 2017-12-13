@@ -96,11 +96,17 @@ class GatheringMDP(MarkovGameMDP):
         # Two hits leads to being frozen, hits reset after -- not consecutive
         if agent_a.frozen_time_remaining > 0:
             agent_a.frozen_time_remaining -= 1
-            if agent_a.frozen_time_remaining > 0:
+            if agent_a.frozen_time_remaining == 0:
+                agent_a.x = 31 if agent_b.x != 31 else 32
+                agent_a.y = 6
+            elif agent_a.frozen_time_remaining > 0:
                 action_a = None
         if agent_b.frozen_time_remaining > 0:
             agent_b.frozen_time_remaining -= 1
-            if agent_b.frozen_time_remaining > 0:
+            if agent_b.frozen_time_remaining == 0:
+                agent_b.x = 31 if agent_a.x != 31 else 32
+                agent_b.y = 6
+            elif agent_b.frozen_time_remaining > 0:
                 action_b = None
 
         if action_a == 'use_beam' and agent_b.frozen_time_remaining == 0:
@@ -177,11 +183,19 @@ class GatheringMDP(MarkovGameMDP):
         # Two hits leads to being frozen, hits reset after -- not consecutive
         if agent_a.frozen_time_remaining > 0:
             agent_a.frozen_time_remaining -= 1
-            if agent_a.frozen_time_remaining > 0:
+            if agent_a.frozen_time_remaining == 0:
+                agent_a.x = 31 if agent_b.x != 31 else 32
+                agent_a.y = 6
+                agent_a.hits = 0
+            elif agent_a.frozen_time_remaining > 0:
                 action_a = None
         if agent_b.frozen_time_remaining > 0:
             agent_b.frozen_time_remaining -= 1
-            if agent_b.frozen_time_remaining > 0:
+            if agent_b.frozen_time_remaining == 0:
+                agent_b.x = 31 if agent_a.x != 31 else 32
+                agent_b.y = 6
+                agent_b.hits = 0
+            elif agent_b.frozen_time_remaining > 0:
                 action_b = None
 
         if action_a == 'use_beam' and agent_b.frozen_time_remaining == 0:
@@ -289,7 +303,9 @@ class GatheringMDP(MarkovGameMDP):
                 target.hits += 1
             else:
                 target.frozen_time_remaining = self.N_tagged
-                target.hits = 0
+                target.hits = 2
+                target.x = -1
+                target.y = -1
             return
         elif beamer.orientation == 'SOUTH' and target.x == beamer.x and target.y > beamer.y:
             if target.hits == 0:
@@ -297,21 +313,27 @@ class GatheringMDP(MarkovGameMDP):
 
             else:
                 target.frozen_time_remaining = self.N_tagged
-                target.hits = 0
+                target.hits = 2
+                target.x = -1
+                target.y = -1
             return
         elif beamer.orientation == 'EAST' and target.x > beamer.x and target.y == beamer.y:
             if target.hits == 0:
                 target.hits += 1
             else:
                 target.frozen_time_remaining = self.N_tagged
-                target.hits = 0
+                target.hits = 2
+                target.x = -1
+                target.y = -1
             return
         elif beamer.orientation == 'WEST' and target.x < beamer.x and target.y == beamer.y:
             if target.hits == 0:
-                target.hits += 1
+                target.hits += 2
             else:
                 target.frozen_time_remaining = self.N_tagged
-                target.hits = 0
+                target.hits = 2
+                target.x = -1
+                target.y = -1
             return
 
     def __str__(self):
