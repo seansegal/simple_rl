@@ -12,15 +12,14 @@ class DQNAgent(Agent):
 
     NAME = "dqn-deep-mind"
 
-    def __init__(self, actions, name=NAME, learning_rate=1e-4,  x_dim=21, y_dim=16, eps_start=1.0, eps_decay=0.000001, eps_end=0.1, num_channels=3, should_train=True, from_checkpoint=None):
+    def __init__(self, actions, name=NAME, learning_rate=1e-4,  x_dim=21, y_dim=16, eps_start=1.0, eps_decay=0.0000001, eps_end=0.1, num_channels=3, should_train=True, from_checkpoint=None):
         Agent.__init__(self, name=name, actions=[])
         self.learning_rate = learning_rate
         self.x_dim, self.y_dim = x_dim, y_dim
         self.actions, self.num_actions = actions, len(actions)
         self.hidden_layers = [32, 32]
-        with tf.variable_scope(self.name):
-            self.mainQN = QNetwork(learning_rate=self.learning_rate, num_actions=self.num_actions, x_dim=self.x_dim, y_dim=self.y_dim, num_channels=num_channels)
-            self.targetQN = QNetwork(learning_rate=self.learning_rate, num_actions=self.num_actions, x_dim=self.x_dim, y_dim=self.y_dim, num_channels=num_channels)
+        self.mainQN = QNetwork(learning_rate=self.learning_rate, num_actions=self.num_actions, x_dim=self.x_dim, y_dim=self.y_dim, num_channels=num_channels)
+        self.targetQN = QNetwork(learning_rate=self.learning_rate, num_actions=self.num_actions, x_dim=self.x_dim, y_dim=self.y_dim, num_channels=num_channels)
         self.sess = tf.Session()
         self.experience_buffer = ExperienceBuffer(buffer_size=10e4)
         self.prev_state, self.prev_action = None, None
@@ -37,7 +36,12 @@ class DQNAgent(Agent):
         self.action_counts = np.zeros(self.num_actions)
         # Parameters for updating target network.
         tau = 0.001
-        self.target_ops = updateTargetGraph(tf.trainable_variables(scope=self.name), tau)
+
+        if '2' in self.name:
+            vs = tf.trainable_variables()
+            self.target_ops = updateTargetGraph(vs[len(vs)//2:], tau)
+        else:
+            self.target_ops = updateTargetGraph(tf.trainable_variables(), tau)
         self.sess.run(tf.global_variables_initializer())
 
         # Load from a checkpoint
