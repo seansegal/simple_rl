@@ -21,12 +21,12 @@ class DQNAgent(Agent):
         self.mainQN = QNetwork(learning_rate=self.learning_rate, num_actions=self.num_actions, x_dim=self.x_dim, y_dim=self.y_dim, num_channels=num_channels)
         self.targetQN = QNetwork(learning_rate=self.learning_rate, num_actions=self.num_actions, x_dim=self.x_dim, y_dim=self.y_dim, num_channels=num_channels)
         self.sess = tf.Session()
-        self.experience_buffer = ExperienceBuffer(buffer_size=10e4)
+        self.experience_buffer = ExperienceBuffer(buffer_size=10e5)
         self.prev_state, self.prev_action = None, None
         self.epsilon, self.epsilon_decay, self.epsilon_end = eps_start, eps_decay, eps_end
         self.curr_step, self.total_steps = 0, 0
         self.curr_episode = 0
-        self.update_freq = 4
+        self.update_freq = 100
         self.batch_size = 32
         self.update_target = 100
         self.should_train = should_train
@@ -46,7 +46,7 @@ class DQNAgent(Agent):
 
         # Load from a checkpoint
         if not (from_checkpoint is None):
-            if os.path.exists(from_checkpoint):
+            if True or os.path.exists(from_checkpoint):
                 self.saver.restore(self.sess, from_checkpoint)
                 print 'Restored model from checkpoint: {}'.format(from_checkpoint)
             else:
