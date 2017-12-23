@@ -12,7 +12,7 @@ class DQNAgent(Agent):
 
     NAME = "dqn-deep-mind"
 
-    def __init__(self, actions, name=NAME, learning_rate=1e-4,  x_dim=21, y_dim=16, eps_start=1.0, eps_decay=0.0000001, eps_end=0.1, num_channels=3, should_train=True, from_checkpoint=None):
+    def __init__(self, actions, name=NAME, learning_rate=1e-4,  x_dim=21, y_dim=16, eps_start=1.0, eps_decay=0.0000001, eps_end=0.1, num_channels=3, should_train=True, from_checkpoint=None, player_id=1):
         Agent.__init__(self, name=name, actions=[])
         self.learning_rate = learning_rate
         self.x_dim, self.y_dim = x_dim, y_dim
@@ -37,20 +37,21 @@ class DQNAgent(Agent):
         # Parameters for updating target network.
         tau = 0.001
 
-        if '2' in self.name:
+        # TODO: Update to support player_id > 2.
+        # NOTE: This is a bit of a hack to update the variables in the target
+        # network. It can be fixed by using scope and Tensorflow 1.4 which takes
+        # a scope argument in tf.trainable_variables().
+        if player_id == 2:
             vs = tf.trainable_variables()
             self.target_ops = updateTargetGraph(vs[len(vs)//2:], tau)
         else:
             self.target_ops = updateTargetGraph(tf.trainable_variables(), tau)
         self.sess.run(tf.global_variables_initializer())
 
-        # Load from a checkpoint
+        # Load model from a checkpoint
         if not (from_checkpoint is None):
-            if True or os.path.exists(from_checkpoint):
-                self.saver.restore(self.sess, from_checkpoint)
-                print 'Restored model from checkpoint: {}'.format(from_checkpoint)
-            else:
-                raise ValueError('Checkpoint file does not exist.')
+            self.saver.restore(self.sess, from_checkpoint)
+            print 'Restored model from checkpoint: {}'.format(from_checkpoint)
 
     def act(self, state, reward):
         # Training
@@ -75,7 +76,7 @@ class DQNAgent(Agent):
 
         # Not Training (or after training)
         if random.random() < self.epsilon:
-            action =  np.random.choice(self.num_actions) # NOTE:  Again assumes actions encoded 0...7
+            action =  np.random.choice(self.num_actions) # NOTE:  Again assumes actions encoded as integers
         else:
             img = state.to_rgb()
             action = self.mainQN.get_best_action(self.sess, img)[0]
@@ -189,7 +190,3 @@ def updateTargetGraph(tfVars,tau):
 def updateTarget(op_holder,sess):
     for op in op_holder:
         sess.run(op)
-
-
-if __name__ == '__main__':
-    print 'HERE'
